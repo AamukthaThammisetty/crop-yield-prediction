@@ -8,25 +8,54 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <style>
     body {
-      background-color: #e9ecef;
+      background-color: #ffffff;
+      margin: 0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
     }
 
     .container {
-      max-width: 800px;
-      padding: 20px;
+      display: flex;
+      max-width: 100vw;
       background-color: #ffffff;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .left-side {
+      width: 50%;
+      padding: 20px;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .right-side {
+      width: 50%;
+      padding: 20px;
     }
 
     h1 {
       color: #4CAF50;
       margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .logo {
+      width: 150px;
+      height: auto;
+    }
+
+    .iframe-container {
+      width: 100%;
+      height: 300px;
+      border: none;
+      border-radius: 12px;
     }
 
     button {
@@ -71,6 +100,9 @@
       document.getElementById("latitude").value = latitude;
       document.getElementById("longitude").value = longitude;
       document.getElementById("location").innerHTML = `Latitude: ${latitude}, Longitude: ${longitude}`;
+
+      // Update iframe with new latitude and longitude for the map
+      document.getElementById("mapIframe").src = `https://www.google.com/maps?q=${latitude},${longitude}&hl=es;z=14&output=embed`;
     }
 
     function showError(error) {
@@ -94,75 +126,83 @@
 
 <body>
   <div class="container">
-    <h1 class="text-center">Crop Yield Prediction</h1>
-    <button class="btn btn-success btn-block" onclick="getLocation()">Get Location</button>
-    <div id="location" class="location-info"></div>
+    <!-- Left side with page title, logo, and map iframe -->
+    <div class="left-side">
+      <img src="https://static.vecteezy.com/system/resources/thumbnails/050/598/433/small/logo-with-farm-tools-and-crops-for-agriculture-based-businesses-vector.jpg" alt="Logo" class="logo">
+      <h1>Crop Yield Prediction</h1>
+      <div class="location-info" id="location">Click below to get location</div>
+      <button class="btn btn-success" onclick="getLocation()">Get Location</button>
+      <iframe id="mapIframe" class="iframe-container" src="https://www.google.com/maps?q=20,77&hl=es;z=14&output=embed"></iframe>
+    </div>
 
-    <form action="/predict" method="POST" class="form">
-      <input type="hidden" name="lat" id="latitude">
-      <input type="hidden" name="lon" id="longitude">
+    <!-- Right side with the form -->
+    <div class="right-side">
+      <form action="/predict" method="POST" class="form">
+        <input type="hidden" name="lat" id="latitude">
+        <input type="hidden" name="lon" id="longitude">
 
-      <div class="form-group">
-        <label for="crop">Crop Name:</label>
-        <select id="crop" name="Item" class="form-control" required>
-          <option value="" disabled selected>Select a crop</option>
-          <option value="Maize">Maize</option>
-          <option value="Potatoes">Potatoes</option>
-          <option value="Rice, paddy">Rice, paddy</option>
-          <option value="Sorghum">Sorghum</option>
-          <option value="Soybeans">Soybeans</option>
-          <option value="Wheat">Wheat</option>
-          <option value="Cassava">Cassava</option>
-          <option value="Sweet potatoes">Sweet potatoes</option>
-          <option value="Plantains and others">Plantains and others</option>
-          <option value="Yams">Yams</option>
-        </select>
-      </div>
+        <div class="form-group">
+          <label for="crop">Crop Name:</label>
+          <select id="crop" name="Item" class="form-control" required>
+            <option value="" disabled selected>Select a crop</option>
+            <option value="Maize">Maize</option>
+            <option value="Potatoes">Potatoes</option>
+            <option value="Rice, paddy">Rice, paddy</option>
+            <option value="Sorghum">Sorghum</option>
+            <option value="Soybeans">Soybeans</option>
+            <option value="Wheat">Wheat</option>
+            <option value="Cassava">Cassava</option>
+            <option value="Sweet potatoes">Sweet potatoes</option>
+            <option value="Plantains and others">Plantains and others</option>
+            <option value="Yams">Yams</option>
+          </select>
+        </div>
 
-      <div class="form-group">
-        <label for="fertilizer_type">Fertilizer Type:</label>
-        <select id="fertilizer_type" name="fertilizer_type" class="form-control" required>
-          <option value="" disabled selected>Select a fertilizer type</option>
-          <option value="Nitrogen">Nitrogen</option>
-          <option value="Phosphorus">Phosphorus</option>
-          <option value="Potassium">Potassium</option>
-          <option value="Organic">Organic</option>
-          <option value="Compound">Compound</option>
-        </select>
-      </div>
+        <div class="form-group">
+          <label for="fertilizer_type">Fertilizer Type:</label>
+          <select id="fertilizer_type" name="fertilizer_type" class="form-control" required>
+            <option value="" disabled selected>Select a fertilizer type</option>
+            <option value="Nitrogen">Nitrogen</option>
+            <option value="Phosphorus">Phosphorus</option>
+            <option value="Potassium">Potassium</option>
+            <option value="Organic">Organic</option>
+            <option value="Compound">Compound</option>
+          </select>
+        </div>
 
-      <div class="form-group">
-        <label for="fertilizer_amount">Fertilizer Amount (kg):</label>
-        <input type="number" name="fertilizer_amount" class="form-control" required>
-      </div>
+        <div class="form-group">
+          <label for="fertilizer_amount">Fertilizer Amount (kg):</label>
+          <input type="number" name="fertilizer_amount" class="form-control" required>
+        </div>
 
-      <div class="form-group">
-        <label for="pesticide_type">Pesticide Type:</label>
-        <select id="pesticide_type" name="pesticide_type" class="form-control" required>
-          <option value="" disabled selected>Select a pesticide type</option>
-          <option value="Insecticide">Insecticide</option>
-          <option value="Herbicide">Herbicide</option>
-          <option value="Fungicide">Fungicide</option>
-          <option value="Rodenticide">Rodenticide</option>
-        </select>
-      </div>
+        <div class="form-group">
+          <label for="pesticide_type">Pesticide Type:</label>
+          <select id="pesticide_type" name="pesticide_type" class="form-control" required>
+            <option value="" disabled selected>Select a pesticide type</option>
+            <option value="Insecticide">Insecticide</option>
+            <option value="Herbicide">Herbicide</option>
+            <option value="Fungicide">Fungicide</option>
+            <option value="Rodenticide">Rodenticide</option>
+          </select>
+        </div>
 
-      <div class="form-group">
-        <label for="pesticides_tonnes">Pesticides (tonnes):</label>
-        <input type="number" name="pesticides_tonnes" class="form-control" required>
-      </div>
+        <div class="form-group">
+          <label for="pesticides_tonnes">Pesticides (tonnes):</label>
+          <input type="number" name="pesticides_tonnes" class="form-control" required>
+        </div>
 
-      <div class="form-group">
-        <label for="country">Country:</label>
-        <select id="country" name="country" class="form-control" required>
-          <option value="" disabled selected>Select your country</option>
-          <option value="India">India</option>
-          <!-- Add more countries as needed -->
-        </select>
-      </div>
+        <div class="form-group">
+          <label for="country">Country:</label>
+          <select id="country" name="country" class="form-control" required>
+            <option value="" disabled selected>Select your country</option>
+            <option value="India">India</option>
+            <!-- Add more countries as needed -->
+          </select>
+        </div>
 
-      <button type="submit" class="btn btn-primary btn-block">Predict Yield</button>
-    </form>
+        <button type="submit" class="btn btn-primary btn-block">Predict Yield</button>
+      </form>
+    </div>
   </div>
 
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
