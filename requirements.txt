@@ -3,3 +3,4 @@ numpy
 requests
 scikit-learn
 pandas
+google-generativeai
