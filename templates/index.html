@@ -1,157 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crop Yield Prediction</title>
-    <style>
-              body {
-          font-family: Arial, sans-serif;
-          background-color: #f2f2f2;
-          margin: 0;
-          padding: 0;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crop Yield Prediction</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e9ecef;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: auto;
+    }
 
-        .container {
-          max-width: 600px;
-          margin: auto;
-          padding: 20px;
-          background-color: #ffffff;
-          border-radius: 8px;
-          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+    .container {
+      max-width: 800px;
+      width: 100%;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
 
-        h1 {
-          text-align: center;
-          color: #333;
-        }
+    h1 {
+      text-align: center;
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
 
-        button {
-          background-color: #4CAF50;
-          color: white;
-          border: none;
-          padding: 10px 15px;
-          cursor: pointer;
-          border-radius: 5px;
-          font-size: 16px;
-        }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 16px;
+      margin-top: 10px;
+      transition: background-color 0.3s;
+    }
 
-        button:hover {
-          background-color: #45a049;
-        }
+    button:hover {
+      background-color: #45a049;
+    }
 
-        .location-info {
-          margin: 15px 0;
-          font-size: 16px;
-          color: #333;
-        }
+    .location-info {
+      margin: 15px 0;
+      font-size: 16px;
+      color: #333;
+      text-align: center;
+    }
 
-        .form {
-          display: flex;
-          flex-direction: column;
-        }
+    .form {
+      display: flex;
+      flex-direction: column;
+    }
 
-        label {
-          margin-top: 10px;
-          color: #555;
-        }
+    label {
+      margin-top: 15px;
+      color: #555;
+      font-weight: bold;
+    }
 
-        input[type="text"], input[type="number"] {
-          padding: 10px;
-          margin-top: 5px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-        }
+    input[type="text"],
+    input[type="number"],
+    select {
+      padding: 12px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
 
-        input[type="text"]:focus, input[type="number"]:focus {
-          border-color: #4CAF50;
-          outline: none;
-        }
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      border-color: #4CAF50;
+      outline: none;
+    }
 
-    </style><!-- Link to CSS file -->
-    <script>
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, showError);
-            } else {
-                document.getElementById("location").innerHTML = "Geolocation is not supported by this browser.";
-            }
-        }
+    select {
+      appearance: none;
+      background-color: #f8f9fa;
+      background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16"%3E%3Cpath fill-rule="evenodd" d="M1.5 4.5a.5.5 0 0 1 .854-.354L8 8.793l5.646-4.646a.5.5 0 1 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6z"/%3E%3C/svg%3E');
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 12px;
+    }
+  </style>
+  <script>
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition, showError);
+      } else {
+        document.getElementById("location").innerHTML = "Geolocation is not supported by this browser.";
+      }
+    }
 
-        function showPosition(position) {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            document.getElementById("latitude").value = latitude;
-            document.getElementById("longitude").value = longitude;
-            document.getElementById("location").innerHTML = `Latitude: ${latitude}, Longitude: ${longitude}`;
-        }
+    function showPosition(position) {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      document.getElementById("latitude").value = latitude;
+      document.getElementById("longitude").value = longitude;
+      document.getElementById("location").innerHTML = `Latitude: ${latitude}, Longitude: ${longitude}`;
+    }
 
-        function showError(error) {
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    document.getElementById("location").innerHTML = "User denied the request for Geolocation.";
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    document.getElementById("location").innerHTML = "Location information is unavailable.";
-                    break;
-                case error.TIMEOUT:
-                    document.getElementById("location").innerHTML = "The request to get user location timed out.";
-                    break;
-                case error.UNKNOWN_ERROR:
-                    document.getElementById("location").innerHTML = "An unknown error occurred.";
-                    break;
-            }
-        }
-    </script>
+    function showError(error) {
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          document.getElementById("location").innerHTML = "User denied the request for Geolocation.";
+          break;
+        case error.POSITION_UNAVAILABLE:
+          document.getElementById("location").innerHTML = "Location information is unavailable.";
+          break;
+        case error.TIMEOUT:
+          document.getElementById("location").innerHTML = "The request to get user location timed out.";
+          break;
+        case error.UNKNOWN_ERROR:
+          document.getElementById("location").innerHTML = "An unknown error occurred.";
+          break;
+      }
+    }
+  </script>
 </head>
+
 <body>
-    <div class="container">
-        <h1>Crop Yield Prediction</h1>
-        <button onclick="getLocation()">Get Location</button>
-        <div id="location" class="location-info"></div>
+  <div class="container">
+    <h1>Crop Yield Prediction</h1>
+    <button onclick="getLocation()">Get Location</button>
+    <div id="location" class="location-info"></div>
 
-        <form action="/predict" method="POST" class="form">
-            <input type="hidden" name="lat" id="latitude">
-            <input type="hidden" name="lon" id="longitude">
+    <form action="/predict" method="POST" class="form">
+      <input type="hidden" name="lat" id="latitude">
+      <input type="hidden" name="lon" id="longitude">
 
-            <label for="soil_ph">Soil pH:</label>
-            <input type="text" name="soil_ph" required>
+      <label for="crop">Crop Name:</label>
+      <select id="crop" name="Item" required>
+        <option value="" disabled selected>Select a crop</option>
+        <option value="Maize">Maize</option>
+        <option value="Potatoes">Potatoes</option>
+        <option value="Rice, paddy">Rice, paddy</option>
+        <option value="Sorghum">Sorghum</option>
+        <option value="Soybeans">Soybeans</option>
+        <option value="Wheat">Wheat</option>
+        <option value="Cassava">Cassava</option>
+        <option value="Sweet potatoes">Sweet potatoes</option>
+        <option value="Plantains and others">Plantains and others</option>
+        <option value="Yams">Yams</option>
+      </select>
 
-            <label for="Item">Crop Name:</label>
-            <input type="text" name="Item" required>
+      <label for="fertilizer_type">Fertilizer Type:</label>
+      <select id="fertilizer_type" name="fertilizer_type" required>
+        <option value="" disabled selected>Select a fertilizer type</option>
+        <option value="Nitrogen">Nitrogen</option>
+        <option value="Phosphorus">Phosphorus</option>
+        <option value="Potassium">Potassium</option>
+        <option value="Organic">Organic</option>
+        <option value="Compound">Compound</option>
+      </select>
 
-            <label for="fertilizer_type">Fertilizer Type:</label>
-            <input type="text" name="fertilizer_type" required>
+      <label for="fertilizer_amount">Fertilizer Amount (kg):</label>
+      <input type="number" name="fertilizer_amount" required>
 
-            <label for="fertilizer_amount">Fertilizer Amount:</label>
-            <input type="number" name="fertilizer_amount" required>
+      <label for="pesticide_type">Pesticide Type:</label>
+      <select id="pesticide_type" name="pesticide_type" required>
+        <option value="" disabled selected>Select a pesticide type</option>
+        <option value="Insecticide">Insecticide</option>
+        <option value="Herbicide">Herbicide</option>
+        <option value="Fungicide">Fungicide</option>
+        <option value="Rodenticide">Rodenticide</option>
+      </select>
 
-            <label for="pesticide_type">Pesticide Type:</label>
-            <input type="text" name="pesticide_type" required>
+      <label for="pesticides_tonnes">Pesticides (tonnes):</label>
+      <input type="number" name="pesticides_tonnes" required>
 
-            <label for="pesticides_tonnes">Pesticides Tonnes:</label>
-            <input type="number" name="pesticides_tonnes" required>
+      <label for="country">Country:</label>
+      <select id="country" name="country" required>
+        <option value="" disabled selected>Select your country</option>
+        <option value="India">India</option>
+        <!-- Add more countries as needed -->
+      </select>
 
-            <label for="state">State:</label>
-            <input type="text" name="state" required>
-
-            <label for="city">City:</label>
-            <input type="text" name="city" required>
-
-            <label for="area">Country:</label>
-            <input type="text" id="area" name="area" required><br>
-    
-            <label for="year">Year:</label>
-            <input type="number" id="year" name="year" min="1900" max="2100" required><br>
-    
-            <label for="avg_temp">Average Temperature (°C):</label>
-            <input type="number" id="avg_temp" name="avg_temp" step="0.1" min="-50" max="60" required><br>
-    
-            <label for="average_rain_fall_mm_per_year">Average Rainfall (mm/year):</label>
-            <input type="number" id="average_rain_fall_mm_per_year" name="average_rain_fall_mm_per_year" step="0.1" required><br>
-
-            <button type="submit">Predict Yield</button>
-        </form>
-    </div>
+      <button type="submit">Predict Yield</button>
+    </form>
+  </div>
 </body>
+
 </html>

@@ -1,10 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crop Yield Prediction Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+        }
+
+        h3 {
+            color: #333;
+        }
+
+        p {
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+            background: #fff;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        a:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
+
 <body>
     <h1>Crop Yield Prediction Results</h1>
 
@@ -12,19 +69,54 @@
     <p><strong>Predicted Yield:</strong> {{ predicted_yield }} kg</p>
 
     <h3>Input Data:</h3>
-    <ul>
-        <li><strong>Soil pH:</strong> {{ input_data.soil_ph }}</li>
-        <li><strong>Crop Item:</strong> {{ input_data.crop_item }}</li>
-        <li><strong>Fertilizer Type:</strong> {{ input_data.fertilizer_type }}</li>
-        <li><strong>Fertilizer Amount (kg):</strong> {{ input_data.fertilizer_amount }}</li>
-        <li><strong>Pesticide Type:</strong> {{ input_data.pesticide_type }}</li>
-        <li><strong>Pesticides Used (tonnes):</strong> {{ input_data.pesticides_tonnes }}</li>
-        <li><strong>Location:</strong> {{ input_data.city }}, {{ input_data.state }}, {{ input_data.area }}</li>
-        <li><strong>Year:</strong> {{ input_data.year }}</li>
-        <li><strong>Average Temperature (°C):</strong> {{ input_data.avg_temp }}</li>
-        <li><strong>Average Rainfall (mm/year):</strong> {{ input_data.average_rain_fall_mm_per_year }}</li>
-    </ul>
+    <table>
+        <tr>
+            <th>Parameter</th>
+            <th>Value</th>
+        </tr>
+        <!-- <tr>
+            <td>Soil pH</td>
+            <td>{{ soil_ph }}</td>
+        </tr> -->
+        <tr>
+            <td>Crop Item</td>
+            <td>{{ crop_item }}</td>
+        </tr>
+        <tr>
+            <td>Fertilizer Type</td>
+            <td>{{ fertilizer_type }}</td>
+        </tr>
+        <tr>
+            <td>Fertilizer Amount (kg)</td>
+            <td>{{ fertilizer_amount }}</td>
+        </tr>
+        <tr>
+            <td>Pesticide Type</td>
+            <td>{{ pesticide_type }}</td>
+        </tr>
+        <tr>
+            <td>Pesticides Used (tonnes)</td>
+            <td>{{ pesticides_tonnes }}</td>
+        </tr>
+        <tr>
+            <td>Location</td>
+            <td>{{ Area }}</td>
+        </tr>
+        <tr>
+            <td>Year</td>
+            <td>{{ Year }}</td>
+        </tr>
+        <tr>
+            <td>Average Temperature (°C)</td>
+            <td>{{ avg_temp }}</td>
+        </tr>
+        <tr>
+            <td>Average Rainfall (mm/year)</td>
+            <td>{{ average_rain_fall_mm_per_year }}</td>
+        </tr>
+    </table>
 
     <a href="/">Go back to Home</a>
 </body>
+
 </html>
