@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Yield Prediction Results</title>
+</head>
+<body>
+    <h1>Crop Yield Prediction Results</h1>
+
+    <h3>Prediction Summary:</h3>
+    <p><strong>Predicted Yield:</strong> {{ predicted_yield }} kg</p>
+
+    <h3>Input Data:</h3>
+    <ul>
+        <li><strong>Soil pH:</strong> {{ input_data.soil_ph }}</li>
+        <li><strong>Crop Item:</strong> {{ input_data.crop_item }}</li>
+        <li><strong>Fertilizer Type:</strong> {{ input_data.fertilizer_type }}</li>
+        <li><strong>Fertilizer Amount (kg):</strong> {{ input_data.fertilizer_amount }}</li>
+        <li><strong>Pesticide Type:</strong> {{ input_data.pesticide_type }}</li>
+        <li><strong>Pesticides Used (tonnes):</strong> {{ input_data.pesticides_tonnes }}</li>
+        <li><strong>Location:</strong> {{ input_data.city }}, {{ input_data.state }}, {{ input_data.area }}</li>
+        <li><strong>Year:</strong> {{ input_data.year }}</li>
+        <li><strong>Average Temperature (°C):</strong> {{ input_data.avg_temp }}</li>
+        <li><strong>Average Rainfall (mm/year):</strong> {{ input_data.average_rain_fall_mm_per_year }}</li>
+    </ul>
+
+    <a href="/">Go back to Home</a>
+</body>
+</html>
