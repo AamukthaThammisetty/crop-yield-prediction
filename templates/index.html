@@ -37,7 +37,7 @@
 
     .right-side {
       width: 50%;
-      padding: 20px;
+      padding: 75px;
     }
 
     h1 {
@@ -84,6 +84,10 @@
     .form-control {
       margin-top: 5px;
     }
+
+    #mapIframe {
+      margin-top: 20px;
+    }
   </style>
   <script>
     function getLocation() {
@@ -128,11 +132,14 @@
   <div class="container">
     <!-- Left side with page title, logo, and map iframe -->
     <div class="left-side">
-      <img src="https://static.vecteezy.com/system/resources/thumbnails/050/598/433/small/logo-with-farm-tools-and-crops-for-agriculture-based-businesses-vector.jpg" alt="Logo" class="logo">
+      <img
+        src="https://static.vecteezy.com/system/resources/thumbnails/050/598/433/small/logo-with-farm-tools-and-crops-for-agriculture-based-businesses-vector.jpg"
+        alt="Logo" class="logo">
       <h1>Crop Yield Prediction</h1>
       <div class="location-info" id="location">Click below to get location</div>
       <button class="btn btn-success" onclick="getLocation()">Get Location</button>
-      <iframe id="mapIframe" class="iframe-container" src="https://www.google.com/maps?q=20,77&hl=es;z=14&output=embed"></iframe>
+      <iframe id="mapIframe" class="iframe-container"
+        src="https://www.google.com/maps?q=20,77&hl=es;z=14&output=embed"></iframe>
     </div>
 
     <!-- Right side with the form -->
