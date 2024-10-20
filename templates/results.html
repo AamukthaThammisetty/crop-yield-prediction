@@ -5,15 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crop Yield Prediction Results</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
             background-color: #f4f4f4;
-            margin: 0;
             padding: 20px;
         }
 
-        h1,h2 {
+        h1,
+        h2 {
             color: #4CAF50;
             text-align: center;
         }
@@ -27,98 +27,86 @@
             color: #555;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th,
-        td {
-            padding: 15px;
-            text-align: left;
-            border: 1px solid #ddd;
+        .suggestion-item {
             background: #fff;
-        }
-
-        th {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 15px;
-            background-color: #4CAF50;
-            color: white;
-            text-decoration: none;
+            padding: 15px;
             border-radius: 5px;
-        }
-
-        a:hover {
-            background-color: #45a049;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
         }
     </style>
 </head>
 
 <body>
-    <h1>Crop Yield Prediction Results</h1>
+    <div class="container">
+        <h1 class="my-4">Crop Yield Prediction Results</h1>
 
-    <h3>Prediction Summary:</h3>
-    <p><strong>Predicted Yield:</strong> {{ predicted_yield }} kg</p>
+        <p>Prediction Summary:</h3>
+        <p><strong>Predicted Yield:</strong> {{ predicted_yield }} kg</p>
 
-    <h3>Input Data:</h3>
-    <table>
-        <tr>
-            <th>Parameter</th>
-            <th>Value</th>
-        </tr>
-        <!-- <tr>
-            <td>Soil pH</td>
-            <td>{{ soil_ph }}</td>
-        </tr> -->
-        <tr>
-            <td>Crop Item</td>
-            <td>{{ crop_item }}</td>
-        </tr>
-        <tr>
-            <td>Fertilizer Type</td>
-            <td>{{ fertilizer_type }}</td>
-        </tr>
-        <tr>
-            <td>Fertilizer Amount (kg)</td>
-            <td>{{ fertilizer_amount }}</td>
-        </tr>
-        <tr>
-            <td>Pesticide Type</td>
-            <td>{{ pesticide_type }}</td>
-        </tr>
-        <tr>
-            <td>Pesticides Used (tonnes)</td>
-            <td>{{ pesticides_tonnes }}</td>
-        </tr>
-        <tr>
-            <td>Location</td>
-            <td>{{ Area }}</td>
-        </tr>
-        <tr>
-            <td>Year</td>
-            <td>{{ Year }}</td>
-        </tr>
-        <tr>
-            <td>Average Temperature (°C)</td>
-            <td>{{ avg_temp }}</td>
-        </tr>
-        <tr>
-            <td>Average Rainfall (mm/year)</td>
-            <td>{{ average_rain_fall_mm_per_year }}</td>
-        </tr>
-    </table>
-    <h2>Solutions to reduce yield</h2>
-    <p>{{response}}</p>
+        <h3>Input Data:</h3>
+        <table class="table table-bordered table-striped">
+            <thead class="thead-light">
+                <tr>
+                    <th>Parameter</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Crop Item</td>
+                    <td>{{ crop_item }}</td>
+                </tr>
+                <tr>
+                    <td>Fertilizer Type</td>
+                    <td>{{ fertilizer_type }}</td>
+                </tr>
+                <tr>
+                    <td>Fertilizer Amount (kg)</td>
+                    <td>{{ fertilizer_amount }}</td>
+                </tr>
+                <tr>
+                    <td>Pesticide Type</td>
+                    <td>{{ pesticide_type }}</td>
+                </tr>
+                <tr>
+                    <td>Pesticides Used (tonnes)</td>
+                    <td>{{ pesticides_tonnes }}</td>
+                </tr>
+                <tr>
+                    <td>Location</td>
+                    <td>{{ Area }}</td>
+                </tr>
+                <tr>
+                    <td>Year</td>
+                    <td>{{ Year }}</td>
+                </tr>
+                <tr>
+                    <td>Average Temperature (°C)</td>
+                    <td>{{ avg_temp }}</td>
+                </tr>
+                <tr>
+                    <td>Average Rainfall (mm/year)</td>
+                    <td>{{ average_rain_fall_mm_per_year }}</td>
+                </tr>
+            </tbody>
+        </table>
 
-    <a href="/">Go back to Home</a>
+        <h1 class="my-4">Yield Improvement Suggestions</h1>
+        <div class="list-group">
+            {% for suggestion in suggestions %}
+            <div class="suggestion-item list-group-item">
+                <strong>Category:</strong> {{ suggestion.category }}<br>
+                <strong>Suggestion:</strong> {{ suggestion.suggestion }}<br>
+                <strong>Reason:</strong> {{ suggestion.reason }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 
 </html>

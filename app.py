@@ -6,6 +6,7 @@ import logging
 import google.generativeai as genai
 import os
 import pandas as pd
+import json
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -52,14 +53,37 @@ def prediction(Year, average_rain_fall_mm_per_year, pesticides_tonnes, avg_temp,
 
     return predicted_yield[0]
 
-def get_gemini_response(Item,Area,predicted_yield,avg_temp,average_rain_fall_mm_per_year,pesticide_type,fertilizer_type):
+def get_gemini_response(Item, Area, predicted_yield, avg_temp, average_rain_fall_mm_per_year, pesticide_type, fertilizer_type):
+    # Configure the API key
     genai.configure(api_key=GOOGLE_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-1.5-flash", generation_config={"response_mime_type": "application/json"})
+
+    # Prepare the prompt for the model
+    prompt = (
+        f"Provide suggestions to improve yield based on the following data: "
+        f"crop name: {Item}, area: {Area}, predicted yield: {predicted_yield} tons, "
+        f"average temperature: {avg_temp}°C, average rainfall: {average_rain_fall_mm_per_year} mm/year, "
+        f"pesticide used: {pesticide_type}, fertilizer used: {fertilizer_type}. "
+        f"Provide suggestions in this format: {{\"suggestions\": [{{\"category\": \"\", \"suggestion\": \"\", \"reason\": \"\"}}]}}"
+    )
+
     # Generate content
-    response = model.generate_content(
-            f"Provide suggestions to improve yield based on the following data: crop name: {Item}, area: {Area}, predicted yield: {predicted_yield} tons, average temperature: {avg_temp}°C, average rainfall: {average_rain_fall_mm_per_year} mm/year, pesticide used: {pesticide_type}, fertilizer used: {fertilizer_type}."
-            )
-    return response.text
+    response = model.generate_content(prompt)
+
+    # Parse the JSON response
+    try:
+        json_data = json.loads(response.text)
+        suggestions=json_data['suggestions']
+    except ValueError as e:
+        # Handle JSON parsing error
+        print(f"Error parsing JSON response: {e}")
+        return None
+
+    return suggestions
+
+# Example usage
+# response = get_gemini_response("Potato", "India", 20, 25, 800, "Insecticide A", "Fertilizer B")
+# print(response)
 
 
 # Route for the home page
@@ -93,7 +117,7 @@ def predict():
             # Make the prediction first
             result = prediction(Year, average_rain_fall_mm_per_year, pesticides_tonnes, avg_temp, Area, Item)
             
-            response=get_gemini_response(
+            suggestions=get_gemini_response(
                 Item=Item,
                 Area=Area,
                 predicted_yield=result,
@@ -102,7 +126,7 @@ def predict():
                 pesticide_type=pesticide_type,
                 fertilizer_type=fertilizer_type
             )
-            app.logger.debug("Gemini Repose :\n%s", response)
+
             return render_template('results.html', 
                                    crop_item=Item, 
                                    fertilizer_type=fertilizer_type, 
@@ -114,7 +138,7 @@ def predict():
                                    average_rain_fall_mm_per_year=average_rain_fall_mm_per_year, 
                                    avg_temp=avg_temp, 
                                    predicted_yield=result,
-                                   response=response
+                                   suggestions=suggestions
                                    )
         else:
             return "Could not fetch weather data.", 400

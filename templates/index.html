@@ -5,21 +5,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crop Yield Prediction</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <style>
     body {
-      font-family: Arial, sans-serif;
       background-color: #e9ecef;
-      margin: 0;
-      padding: 0;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: auto;
+      height: 100vh;
+      margin: 0;
     }
 
     .container {
       max-width: 800px;
-      width: 100%;
       padding: 20px;
       background-color: #ffffff;
       border-radius: 12px;
@@ -27,7 +25,6 @@
     }
 
     h1 {
-      text-align: center;
       color: #4CAF50;
       margin-bottom: 20px;
     }
@@ -55,42 +52,8 @@
       text-align: center;
     }
 
-    .form {
-      display: flex;
-      flex-direction: column;
-    }
-
-    label {
-      margin-top: 15px;
-      color: #555;
-      font-weight: bold;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    select {
-      padding: 12px;
+    .form-control {
       margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
-      transition: border-color 0.3s;
-    }
-
-    input[type="text"]:focus,
-    input[type="number"]:focus,
-    select:focus {
-      border-color: #4CAF50;
-      outline: none;
-    }
-
-    select {
-      appearance: none;
-      background-color: #f8f9fa;
-      background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16"%3E%3Cpath fill-rule="evenodd" d="M1.5 4.5a.5.5 0 0 1 .854-.354L8 8.793l5.646-4.646a.5.5 0 1 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6z"/%3E%3C/svg%3E');
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      background-size: 12px;
     }
   </style>
   <script>
@@ -131,64 +94,80 @@
 
 <body>
   <div class="container">
-    <h1>Crop Yield Prediction</h1>
-    <button onclick="getLocation()">Get Location</button>
+    <h1 class="text-center">Crop Yield Prediction</h1>
+    <button class="btn btn-success btn-block" onclick="getLocation()">Get Location</button>
     <div id="location" class="location-info"></div>
 
     <form action="/predict" method="POST" class="form">
       <input type="hidden" name="lat" id="latitude">
       <input type="hidden" name="lon" id="longitude">
 
-      <label for="crop">Crop Name:</label>
-      <select id="crop" name="Item" required>
-        <option value="" disabled selected>Select a crop</option>
-        <option value="Maize">Maize</option>
-        <option value="Potatoes">Potatoes</option>
-        <option value="Rice, paddy">Rice, paddy</option>
-        <option value="Sorghum">Sorghum</option>
-        <option value="Soybeans">Soybeans</option>
-        <option value="Wheat">Wheat</option>
-        <option value="Cassava">Cassava</option>
-        <option value="Sweet potatoes">Sweet potatoes</option>
-        <option value="Plantains and others">Plantains and others</option>
-        <option value="Yams">Yams</option>
-      </select>
+      <div class="form-group">
+        <label for="crop">Crop Name:</label>
+        <select id="crop" name="Item" class="form-control" required>
+          <option value="" disabled selected>Select a crop</option>
+          <option value="Maize">Maize</option>
+          <option value="Potatoes">Potatoes</option>
+          <option value="Rice, paddy">Rice, paddy</option>
+          <option value="Sorghum">Sorghum</option>
+          <option value="Soybeans">Soybeans</option>
+          <option value="Wheat">Wheat</option>
+          <option value="Cassava">Cassava</option>
+          <option value="Sweet potatoes">Sweet potatoes</option>
+          <option value="Plantains and others">Plantains and others</option>
+          <option value="Yams">Yams</option>
+        </select>
+      </div>
 
-      <label for="fertilizer_type">Fertilizer Type:</label>
-      <select id="fertilizer_type" name="fertilizer_type" required>
-        <option value="" disabled selected>Select a fertilizer type</option>
-        <option value="Nitrogen">Nitrogen</option>
-        <option value="Phosphorus">Phosphorus</option>
-        <option value="Potassium">Potassium</option>
-        <option value="Organic">Organic</option>
-        <option value="Compound">Compound</option>
-      </select>
+      <div class="form-group">
+        <label for="fertilizer_type">Fertilizer Type:</label>
+        <select id="fertilizer_type" name="fertilizer_type" class="form-control" required>
+          <option value="" disabled selected>Select a fertilizer type</option>
+          <option value="Nitrogen">Nitrogen</option>
+          <option value="Phosphorus">Phosphorus</option>
+          <option value="Potassium">Potassium</option>
+          <option value="Organic">Organic</option>
+          <option value="Compound">Compound</option>
+        </select>
+      </div>
 
-      <label for="fertilizer_amount">Fertilizer Amount (kg):</label>
-      <input type="number" name="fertilizer_amount" required>
+      <div class="form-group">
+        <label for="fertilizer_amount">Fertilizer Amount (kg):</label>
+        <input type="number" name="fertilizer_amount" class="form-control" required>
+      </div>
 
-      <label for="pesticide_type">Pesticide Type:</label>
-      <select id="pesticide_type" name="pesticide_type" required>
-        <option value="" disabled selected>Select a pesticide type</option>
-        <option value="Insecticide">Insecticide</option>
-        <option value="Herbicide">Herbicide</option>
-        <option value="Fungicide">Fungicide</option>
-        <option value="Rodenticide">Rodenticide</option>
-      </select>
+      <div class="form-group">
+        <label for="pesticide_type">Pesticide Type:</label>
+        <select id="pesticide_type" name="pesticide_type" class="form-control" required>
+          <option value="" disabled selected>Select a pesticide type</option>
+          <option value="Insecticide">Insecticide</option>
+          <option value="Herbicide">Herbicide</option>
+          <option value="Fungicide">Fungicide</option>
+          <option value="Rodenticide">Rodenticide</option>
+        </select>
+      </div>
 
-      <label for="pesticides_tonnes">Pesticides (tonnes):</label>
-      <input type="number" name="pesticides_tonnes" required>
+      <div class="form-group">
+        <label for="pesticides_tonnes">Pesticides (tonnes):</label>
+        <input type="number" name="pesticides_tonnes" class="form-control" required>
+      </div>
 
-      <label for="country">Country:</label>
-      <select id="country" name="country" required>
-        <option value="" disabled selected>Select your country</option>
-        <option value="India">India</option>
-        <!-- Add more countries as needed -->
-      </select>
+      <div class="form-group">
+        <label for="country">Country:</label>
+        <select id="country" name="country" class="form-control" required>
+          <option value="" disabled selected>Select your country</option>
+          <option value="India">India</option>
+          <!-- Add more countries as needed -->
+        </select>
+      </div>
 
-      <button type="submit">Predict Yield</button>
+      <button type="submit" class="btn btn-primary btn-block">Predict Yield</button>
     </form>
   </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 
 </html>
