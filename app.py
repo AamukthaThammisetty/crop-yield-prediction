@@ -3,12 +3,14 @@ import numpy as np
 import pickle
 import requests
 import logging
+import google.generativeai as genai
+import os
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
-
+GOOGLE_API_KEY="AIzaSyDbbVCZqKFyaCjRR-9IJhlbN-nmCvWeJPU"
 with open('./modals/preprocessor.pkl', 'rb') as file:
     preprocessor = pickle.load(file)
 
@@ -23,6 +25,7 @@ def get_weather_data(lat, lon, api_key):
         return data
     else:
         return None
+
 
 # Prediction function
 import pandas as pd
@@ -66,7 +69,7 @@ def predict():
         pesticide_type = request.form.get('pesticide_type')
         pesticides_tonnes = float(request.form.get('pesticides_tonnes'))
         Area = request.form.get('country')
-        Year =  2024 # int(request.form.get('Year'))  # Uncomment and ensure the form has a Year field
+        Year = 2024  # Ensure Year is handled appropriately
         lat = request.form.get('lat')
         lon = request.form.get('lon')
 
@@ -76,11 +79,34 @@ def predict():
 
         if weather_data:
             avg_temp = weather_data['main']['temp']
-            # Make sure to fetch the correct rainfall data
             average_rain_fall_mm_per_year = weather_data.get('rain', {}).get('1h', 0) * 1000 * 365  # Example conversion
 
+
+            # Make the prediction first
             result = prediction(Year, average_rain_fall_mm_per_year, pesticides_tonnes, avg_temp, Area, Item)
             app.logger.debug(result)
+            try:
+                # Load the Gemini model
+                api_key = os.getenv("GOOGLE_API_KEY")
+                
+                genai.configure(api_key=api_key)
+                model = genai.GenerativeModel("gemini-1.5-flash")
+                # Generate content
+                response = model.generate_content(
+                    f"Provide suggestions to improve yield based on the following data: crop name: {Item}, area: {Area}, predicted yield: {result} tons, average temperature: {avg_temp}°C, average rainfall: {average_rain_fall_mm_per_year} mm/year, pesticide used: {pesticide_type}, fertilizer used: {fertilizer_type}."
+                )
+                return "model"
+
+                # Check response for errors
+                if not response or 'error' in response:
+                    app.logger.error("Gemini API error response: %s", response)
+                    return "Failed to generate suggestions from Gemini API.", 500
+
+            except Exception as e:
+                app.logger.error("Error while calling Gemini API: %s", str(e))
+            
+                return "An error occurred while contacting the Gemini API.", 500
+
             return render_template('results.html', 
                                    crop_item=Item, 
                                    fertilizer_type=fertilizer_type, 
@@ -91,13 +117,14 @@ def predict():
                                    Year=Year, 
                                    average_rain_fall_mm_per_year=average_rain_fall_mm_per_year, 
                                    avg_temp=avg_temp, 
-                                   predicted_yield=result)
+                                   predicted_yield=result,
+                                   response=response
+                                   )
         else:
             return "Could not fetch weather data.", 400
 
     except Exception as e:
-        # Log the exception (optional)
-        print(f"An error occurred: {e}")
+        app.logger.error("An error occurred: %s", e)
         return "An error occurred while processing your request. Please try again.", 500
 
 
