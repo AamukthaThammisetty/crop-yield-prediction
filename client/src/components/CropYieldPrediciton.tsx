@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Card, CardHeader, CardFooter, CardContent } from '@/components/ui/card'
 import { MapPin, Loader2, Divide, Loader } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import axios from 'axios';
+import { MultiSelect } from "@/components/ui/multi-select";
 
 const CropYieldPrediction = () => {
   const [formData, setFormData] = useState({
@@ -31,7 +32,22 @@ const CropYieldPrediction = () => {
   const [suggestions, setSuggestions] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestionGeneration, setSuggestionsGenerating] = useState(false);
+  const [fertilizerTypes, setFertilizerTypes] = useState(["Nitrogen", "Phosphorus", "Potassium", "Organic", "Compound"]);
+  const [pesticideTypes, setPesticideTypes] = useState<string[]>(["Insecticide", "Herbicide", "Fungicide", "Rodenticide"]);
+  const [selectedPesticides, setSelectedPesticides] = useState<string[]>([]);
+  const [selectedFertilizers, setSelectedFertilizers] = useState<string[]>([]);
+
   const [error, setError] = useState(null);
+
+  // const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>(["react", "angular"]);
+  // const frameworksList = [
+  //   { value: "react", label: "React" },
+  //   { value: "angular", label: "Angular" },
+  //   { value: "vue", label: "Vue" },
+  //   { value: "svelte", label: "Svelte" },
+  //   { value: "ember", label: "Ember" },
+  // ];
+
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
@@ -158,13 +174,77 @@ const CropYieldPrediction = () => {
     "Wheat", "Cassava", "Sweet potatoes", "Plantains", "Yams"
   ];
 
-  const fertilizerTypes = [
-    "Nitrogen", "Phosphorus", "Potassium", "Organic", "Compound"
-  ];
+  const cropData = {
+    "Maize": {
+      fertilizers: ["Urea", "Diammonium Phosphate", "Ammonium Nitrate", "Compound"],
+      pesticides: ["Insecticide", "Herbicide", "Fungicide"]
+    },
+    "Potatoes": {
+      fertilizers: ["Nitrogen", "Phosphorus", "Potassium", "Calcium Ammonium Nitrate"],
+      pesticides: ["Fungicide", "Rodenticide", "Nematicide"]
+    },
+    "Rice, paddy": {
+      fertilizers: ["Urea", "Superphosphate", "Muriate of Potash"],
+      pesticides: ["Insecticide", "Herbicide", "Larvicide"]
+    },
+    "Sorghum": {
+      fertilizers: ["Urea", "Phosphorus", "Organic", "Sulfur"],
+      pesticides: ["Herbicide", "Bactericide", "Repellent"]
+    },
+    "Soybeans": {
+      fertilizers: ["Potassium", "Organic", "Magnesium"],
+      pesticides: ["Fungicide", "Insecticide", "Acaricide"]
+    },
+    "Wheat": {
+      fertilizers: ["Nitrogen", "Phosphorus", "Potassium", "Diammonium Phosphate"],
+      pesticides: ["Herbicide", "Fungicide", "Larvicide"]
+    },
+    "Cassava": {
+      fertilizers: ["Phosphorus", "Potassium", "Organic"],
+      pesticides: ["Insecticide", "Rodenticide", "Molluscicide"]
+    },
+    "Sweet potatoes": {
+      fertilizers: ["Nitrogen", "Phosphorus", "Calcium Ammonium Nitrate"],
+      pesticides: ["Fungicide", "Herbicide", "Nematicide"]
+    },
+    "Plantains and others": {
+      fertilizers: ["Urea", "Organic", "Magnesium"],
+      pesticides: ["Insecticide", "Larvicide", "Repellent"]
+    },
+    "Yams": {
+      fertilizers: ["Nitrogen", "Potassium", "Sulfur"],
+      pesticides: ["Fungicide", "Rodenticide", "Bactericide"]
+    }
+  };
 
-  const pesticideTypes = [
-    "Insecticide", "Herbicide", "Fungicide", "Rodenticide"
-  ];
+  useEffect(() => {
+    const item = formData['Item'];
+    // @ts-ignore
+    if (item && cropData[item]) {
+      // @ts-ignore
+      setFertilizerTypes(cropData[item].fertilizers || []);
+      // @ts-ignore
+      setPesticideTypes(cropData[item].pesticides || []);
+    }
+  }, [formData['Item']]);
+
+  useEffect(() => {
+    if (selectedFertilizers.length == 0) {
+      formData['fertilizer_type'] = '';
+    } else {
+      formData['fertilizer_type'] = selectedFertilizers[0];
+    }
+  }, [selectedFertilizers]);
+
+  useEffect(() => {
+    if (selectedPesticides.length == 0) {
+      formData['pesticide_type'] = '';
+    } else {
+      formData['pesticide_type'] = selectedPesticides[0];
+    }
+  }, [selectedFertilizers]);
+
+
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
@@ -250,21 +330,15 @@ const CropYieldPrediction = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="fertilizer_type">Fertilizer Type</Label>
-                  <Select
-                    value={formData.fertilizer_type}
-                    onValueChange={(value) => handleInputChange('fertilizer_type', value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select fertilizer type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {fertilizerTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <MultiSelect
+                    options={fertilizerTypes}
+                    onValueChange={setSelectedFertilizers}
+                    defaultValue={selectedPesticides}
+                    placeholder="Select Pesticides"
+                    variant="inverted"
+                    animation={2}
+                    maxCount={4}
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -278,23 +352,19 @@ const CropYieldPrediction = () => {
                   />
                 </div>
 
+
+
                 <div className="space-y-2">
                   <Label htmlFor="pesticide_type">Pesticide Type</Label>
-                  <Select
-                    value={formData.pesticide_type}
-                    onValueChange={(value) => handleInputChange('pesticide_type', value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select pesticide type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pesticideTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <MultiSelect
+                    options={pesticideTypes}
+                    onValueChange={setSelectedFertilizers}
+                    defaultValue={selectedPesticides}
+                    placeholder="Select Pesticides"
+                    variant="inverted"
+                    animation={2}
+                    maxCount={3}
+                  />
                 </div>
 
                 <div className="space-y-2">
