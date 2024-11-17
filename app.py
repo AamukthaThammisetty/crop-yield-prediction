@@ -12,11 +12,11 @@ import json
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
-GOOGLE_API_KEY="AIzaSyDbbVCZqKFyaCjRR-9IJhlbN-nmCvWeJPU"
-with open('./modals/preprocessor.pkl', 'rb') as file:
+GOOGLE_API_KEY="AIzaSyCRAzjCGcvE0nrpyWcaGBBwv0XA4wtSRXs"
+with open('./models/preprocessor.pkl', 'rb') as file:
     preprocessor = pickle.load(file)
 
-with open('./modals/dtr.pkl', 'rb') as file:
+with open('./models/dtr.pkl', 'rb') as file:
     dtr = pickle.load(file)
 
 gemini_api_key = os.getenv("GOOGLE_API_KEY")
@@ -56,7 +56,7 @@ def prediction(Year, average_rain_fall_mm_per_year, pesticides_tonnes, avg_temp,
 def get_gemini_response(Item, Area, predicted_yield, avg_temp, average_rain_fall_mm_per_year, pesticide_type, fertilizer_type):
     # Configure the API key
     genai.configure(api_key=GOOGLE_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash", generation_config={"response_mime_type": "application/json"})
+    model = genai.GenerativeModel("gemini-1.5-pro", generation_config={"response_mime_type": "application/json"})
 
     # Prepare the prompt for the model
     prompt = (
