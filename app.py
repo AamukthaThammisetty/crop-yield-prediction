@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import numpy as np
 import pickle
 import requests
@@ -7,147 +8,203 @@ import google.generativeai as genai
 import os
 import pandas as pd
 import json
+from typing import Dict, Any, Optional, List
+
+# Initialize Flask app
+app = Flask(__name__)
+# Enable CORS for all routes and origins
+CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": True}})
+
+# Configuration
+class Config:
+    GOOGLE_API_KEY = "AIzaSyCRAzjCGcvE0nrpyWcaGBBwv0XA4wtSRXs"
+    WEATHER_API_KEY = "9c09746335a53f6856f1cd7981e8896b"
+    MODEL_PATH = './models'
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
-GOOGLE_API_KEY="AIzaSyCRAzjCGcvE0nrpyWcaGBBwv0XA4wtSRXs"
-with open('./models/preprocessor.pkl', 'rb') as file:
-    preprocessor = pickle.load(file)
+# Load models
+try:
+    with open(f'{Config.MODEL_PATH}/preprocessor.pkl', 'rb') as file:
+        preprocessor = pickle.load(file)
+    with open(f'{Config.MODEL_PATH}/dtr.pkl', 'rb') as file:
+        dtr = pickle.load(file)
+except Exception as e:
+    logger.error(f"Error loading models: {str(e)}")
+    raise
 
-with open('./models/dtr.pkl', 'rb') as file:
-    dtr = pickle.load(file)
+# Configure Gemini
+genai.configure(api_key=Config.GOOGLE_API_KEY)
+gemini_model = genai.GenerativeModel("gemini-1.5-pro", 
+                                   generation_config={"response_mime_type": "application/json"})
 
-gemini_api_key = os.getenv("GOOGLE_API_KEY")
+# Utility Functions
+class WeatherService:
+    @staticmethod
+    def get_weather_data(lat: float, lon: float) -> Optional[Dict[str, Any]]:
+        """Fetch weather data from OpenWeatherMap API."""
+        try:
+            url = f"http://api.openweathermap.org/data/2.5/weather"
+            params = {
+                "lat": lat,
+                "lon": lon,
+                "appid": Config.WEATHER_API_KEY,
+                "units": "metric"
+            }
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Weather API error: {str(e)}")
+            return None
 
-def get_weather_data(lat, lon, api_key):
-    url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        return data
-    else:
-        return None
+class PredictionService:
+    @staticmethod
+    def predict_yield(features: Dict[str, Any]) -> float:
+        """Make yield prediction using the loaded model."""
+        try:
+            # Create DataFrame from features
+            df = pd.DataFrame([features])
+            
+            # Transform features
+            transformed_features = preprocessor.transform(df)
+            
+            # Make prediction
+            prediction = dtr.predict(transformed_features)[0]
+            
+            logger.debug(f"Prediction made with features: {features}")
+            return float(prediction)
+        except Exception as e:
+            logger.error(f"Prediction error: {str(e)}")
+            raise
 
+class SuggestionService:
+    @staticmethod
+    def get_suggestions(params: Dict[str, Any]) -> List[Dict[str, str]]:
+        """Get suggestions from Gemini model."""
+        try:
+            prompt = (
+                f"Provide suggestions to improve yield based on the following data: "
+                f"crop name: {params['Item']}, "
+                f"area: {params['Area']}, "
+                f"predicted yield: {params['predicted_yield']} tons, "
+                f"average temperature: {params['avg_temp']}°C, "
+                f"average rainfall: {params['average_rain_fall_mm_per_year']} mm/year, "
+                f"pesticide used: {params['pesticide_type']}, "
+                f"fertilizer used: {params['fertilizer_type']}. "
+                f"Provide suggestions in this format: "
+                f"{{\"suggestions\": [{{\"category\": \"\", \"suggestion\": \"\", \"reason\": \"\"}}]}}"
+            )
+            
+            response = gemini_model.generate_content(prompt)
+            suggestions = json.loads(response.text)['suggestions']
+            return suggestions
+        except Exception as e:
+            logger.error(f"Suggestion generation error: {str(e)}")
+            raise
 
-def prediction(Year, average_rain_fall_mm_per_year, pesticides_tonnes, avg_temp, Area, Item):
-    # Create a DataFrame for the input features
-    features = pd.DataFrame({
-        'Year': [Year],
-        'average_rain_fall_mm_per_year': [average_rain_fall_mm_per_year],
-        'pesticides_tonnes': [pesticides_tonnes],
-        'avg_temp': [avg_temp],
-        'Area': [Area],
-        'Item': [Item]
-    })
-
-    # Print the features for debugging
-    app.logger.debug("Input features:\n%s", features)
-
-    # Transform the features using the preprocessor
-    transformed_features = preprocessor.transform(features)
-
-    # Make the prediction
-    predicted_yield = dtr.predict(transformed_features)
-
-    return predicted_yield[0]
-
-def get_gemini_response(Item, Area, predicted_yield, avg_temp, average_rain_fall_mm_per_year, pesticide_type, fertilizer_type):
-    # Configure the API key
-    genai.configure(api_key=GOOGLE_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-pro", generation_config={"response_mime_type": "application/json"})
-
-    # Prepare the prompt for the model
-    prompt = (
-        f"Provide suggestions to improve yield based on the following data: "
-        f"crop name: {Item}, area: {Area}, predicted yield: {predicted_yield} tons, "
-        f"average temperature: {avg_temp}°C, average rainfall: {average_rain_fall_mm_per_year} mm/year, "
-        f"pesticide used: {pesticide_type}, fertilizer used: {fertilizer_type}. "
-        f"Provide suggestions in this format: {{\"suggestions\": [{{\"category\": \"\", \"suggestion\": \"\", \"reason\": \"\"}}]}}"
-    )
-
-    # Generate content
-    response = model.generate_content(prompt)
-
-    # Parse the JSON response
-    try:
-        json_data = json.loads(response.text)
-        suggestions=json_data['suggestions']
-    except ValueError as e:
-        # Handle JSON parsing error
-        print(f"Error parsing JSON response: {e}")
-        return None
-
-    return suggestions
-
-# Example usage
-# response = get_gemini_response("Potato", "India", 20, 25, 800, "Insecticide A", "Fertilizer B")
-# print(response)
-
-
-# Route for the home page
+# API Routes
 @app.route('/')
 def index():
-    return render_template('index.html') 
+    """Health check endpoint."""
+    return jsonify({"status": "healthy", "message": "Crop Prediction API is running"})
 
-@app.route('/predict', methods=['POST'])
+@app.route('/api/predict', methods=['POST'])
 def predict():
+    """Endpoint for crop yield prediction."""
     try:
-        # Extract data from the form
-        Item = request.form.get('Item')
-        fertilizer_type = request.form.get('fertilizer_type')
-        fertilizer_amount = request.form.get('fertilizer_amount')
-        pesticide_type = request.form.get('pesticide_type')
-        pesticides_tonnes = float(request.form.get('pesticides_tonnes'))
-        Area = request.form.get('country')
-        Year = 2024  # Ensure Year is handled appropriately
-        lat = request.form.get('lat')
-        lon = request.form.get('lon')
+        # Extract form data
+        data = request.form.to_dict()
+        required_fields = ['Item', 'fertilizer_type', 'fertilizer_amount', 
+                         'pesticide_type', 'pesticides_tonnes', 'country', 
+                         'lat', 'lon']
+        
+        # Validate required fields
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
 
-        # Fetch weather data using the provided location
-        API_KEY_WEATHER = "9c09746335a53f6856f1cd7981e8896b"
-        weather_data = get_weather_data(lat, lon, API_KEY_WEATHER)
+        # Get weather data
+        weather_data = WeatherService.get_weather_data(
+            float(data['lat']), 
+            float(data['lon'])
+        )
+        
+        if not weather_data:
+            return jsonify({"error": "Could not fetch weather data"}), 400
 
-        if weather_data:
-            avg_temp = weather_data['main']['temp']
-            average_rain_fall_mm_per_year = weather_data.get('rain', {}).get('1h', 0) * 1000 * 365  # Example conversion
+        # Prepare features for prediction
+        print(weather_data.get('rain', {}))
+        features = {
+            'Year': 2024,
+            'average_rain_fall_mm_per_year': weather_data.get('rain', {}).get('1h', 0) * 1000 * 365,
+            'pesticides_tonnes': float(data['pesticides_tonnes']),
+            'avg_temp': weather_data['main']['temp'],
+            'Area': data['country'],
+            'Item': data['Item']
+        }
 
+        # Make prediction
+        predicted_yield = PredictionService.predict_yield(features)
 
-            # Make the prediction first
-            result = prediction(Year, average_rain_fall_mm_per_year, pesticides_tonnes, avg_temp, Area, Item)
-            
-            suggestions=get_gemini_response(
-                Item=Item,
-                Area=Area,
-                predicted_yield=result,
-                avg_temp=avg_temp,
-                average_rain_fall_mm_per_year=average_rain_fall_mm_per_year,
-                pesticide_type=pesticide_type,
-                fertilizer_type=fertilizer_type
-            )
-
-            return render_template('results.html', 
-                                   crop_item=Item, 
-                                   fertilizer_type=fertilizer_type, 
-                                   fertilizer_amount=fertilizer_amount, 
-                                   pesticide_type=pesticide_type, 
-                                   pesticides_tonnes=pesticides_tonnes, 
-                                   Area=Area, 
-                                   Year=Year, 
-                                   average_rain_fall_mm_per_year=average_rain_fall_mm_per_year, 
-                                   avg_temp=avg_temp, 
-                                   predicted_yield=result,
-                                   suggestions=suggestions
-                                   )
-        else:
-            return "Could not fetch weather data.", 400
+        return jsonify({
+            "status": "success",
+            "data": {
+                "crop_item": data['Item'],
+                "fertilizer_type": data['fertilizer_type'],
+                "fertilizer_amount": data['fertilizer_amount'],
+                "pesticide_type": data['pesticide_type'],
+                "pesticides_tonnes": float(data['pesticides_tonnes']),
+                "Area": data['country'],
+                "Year": features['Year'],
+                "average_rain_fall_mm_per_year": features['average_rain_fall_mm_per_year'],
+                "avg_temp": features['avg_temp'],
+                "predicted_yield": predicted_yield
+            }
+        })
 
     except Exception as e:
-        app.logger.error("An error occurred: %s", e)
-        return "An error occurred while processing your request. Please try again.", 500
+        logger.error(f"Prediction endpoint error: {str(e)}")
+        return jsonify({"error": "An error occurred during prediction"}), 500
 
+@app.route('/api/suggestions', methods=['POST'])
+def get_suggestions():
+    """Endpoint for getting yield improvement suggestions."""
+    try:
+        data = request.json
+        required_fields = ['Item', 'Area', 'predicted_yield', 'avg_temp',
+                         'average_rain_fall_mm_per_year', 'pesticide_type',
+                         'fertilizer_type']
+        
+        # Validate required fields
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
 
+        # Get suggestions
+        suggestions = SuggestionService.get_suggestions(data)
+        
+        return jsonify({
+            "status": "success",
+            "data": {
+                "suggestions": suggestions
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Suggestions endpoint error: {str(e)}")
+        return jsonify({"error": "An error occurred while generating suggestions"}), 500
+
+# Error Handlers
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Resource not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=3000)
+    app.run(debug=True, port=8080)

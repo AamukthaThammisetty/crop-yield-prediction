@@ -6,16 +6,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardFooter, CardContent } from '@/components/ui/card';
-import { MapPin, Loader2 } from 'lucide-react';
+import { MapPin, Loader2, Divide, Loader } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import axios from 'axios';
 
 const CropYieldPrediction = () => {
   const [formData, setFormData] = useState({
-    crop: '',
-    fertilizerType: '',
-    fertilizerAmount: '',
-    pesticideType: '',
-    pesticidesAmount: '',
+    Item: '',
+    fertilizer_type: '',
+    fertilizer_amount: '',
+    pesticide_type: '',
+    pesticides_tonnes: '',
     country: ''
   });
 
@@ -26,18 +27,27 @@ const CropYieldPrediction = () => {
     loading: false
   });
 
+  const [prediction, setPrediction] = useState(null);
+  const [suggestions, setSuggestions] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [suggestionGeneration, setSuggestionsGenerating] = useState(false);
+  const [error, setError] = useState(null);
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+    // Clear previous predictions and errors when form changes
+    setPrediction(null);
+    setSuggestions(null);
+    setError(null);
   };
 
   const getLocation = () => {
     setLocation(prev => ({ ...prev, loading: true, error: null }));
 
     if (navigator.geolocation) {
-
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setLocation({
@@ -55,11 +65,12 @@ const CropYieldPrediction = () => {
             2: "Location information unavailable.",
             3: "Location request timed out."
           };
+          // @ts-ignore
           setLocation({
             latitude: null,
             longitude: null,
             // @ts-ignore
-            error: errorMessages[error.code] || "An unknown error occurred.",
+            error: "An unknown error occurred.",
             loading: false
           });
         }
@@ -74,10 +85,72 @@ const CropYieldPrediction = () => {
     }
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    // Add your prediction logic here
-    console.log('Form submitted:', { ...formData, location });
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // Create FormData object
+      const submitData = new FormData();
+
+      // Add form fields to FormData
+      submitData.append('Item', formData.Item);
+      submitData.append('fertilizer_type', formData.fertilizer_type);
+      submitData.append('fertilizer_amount', formData.fertilizer_amount);
+      submitData.append('pesticide_type', formData.pesticide_type);
+      submitData.append('pesticides_tonnes', formData.pesticides_tonnes);
+      submitData.append('country', formData.country);
+
+      // Add location data
+      // @ts-ignore
+      submitData.append('lat', location.latitude);
+      // @ts-ignore
+      submitData.append('lon', location.longitude);
+
+      // Make prediction request
+      const predictionResponse = await axios.post(
+        'http://localhost:8080/api/predict',
+        submitData,
+        { withCredentials: true }
+      );
+
+      console.log(predictionResponse.data.data);
+      document.getElementById('prediction-results')?.scrollIntoView({ behavior: 'smooth' });
+
+      // Store prediction result
+      setPrediction(predictionResponse.data.data);
+
+      // Make suggestions request with prediction data
+      setSuggestionsGenerating(true);
+      setSuggestions(null);
+      const suggestionsResponse = await axios.post(
+        'http://localhost:8080/api/suggestions',
+        {
+          Item: formData.Item,
+          Area: formData.country,
+          predicted_yield: predictionResponse.data.data.predicted_yield,
+          avg_temp: predictionResponse.data.data.avg_temp,
+          average_rain_fall_mm_per_year: predictionResponse.data.data.average_rain_fall_mm_per_year,
+          pesticide_type: formData.pesticide_type,
+          fertilizer_type: formData.fertilizer_type
+        },
+        { withCredentials: true }
+      );
+
+      setSuggestionsGenerating(false);
+
+      // Store suggestions
+      setSuggestions(suggestionsResponse.data.data.suggestions);
+      console.log(suggestionsResponse.data.data.suggestions);
+
+    } catch (err) {
+      //@ts-ignore
+      setError(err.response?.data?.error || 'An error occurred while making the prediction');
+      console.error('Error:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const crops = [
@@ -115,9 +188,9 @@ const CropYieldPrediction = () => {
                 </Alert>
               )}
 
+
               {location.latitude && (
                 <div className="text-sm text-gray-600 space-y-1">
-
                   <p>Latitude: {location.latitude}°</p>
                   <p>Longitude: {location.longitude}°</p>
                 </div>
@@ -137,15 +210,17 @@ const CropYieldPrediction = () => {
                   'Get Location'
                 )}
               </Button>
+              <iframe id="mapIframe" className="w-full h-72"
+                src={`https://www.google.com/maps?q=${location.latitude},${location.longitude}&hl=es;z=14&output=embed`} ></iframe>
             </div>
 
-            <div className="w-full h-64 bg-gray-100 rounded-lg overflow-hidden">
-              <iframe
-                className="w-full h-full border-0"
-                src={`https://www.google.com/maps?q=${location.latitude},${location.longitude}&hl=es;z=14&output=embed`}
-                allowFullScreen
-              />
-            </div>
+
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
 
@@ -155,17 +230,17 @@ const CropYieldPrediction = () => {
             <CardContent className="space-y-6 pt-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="crop">Crop Type</Label>
+                  <Label htmlFor="Item">Crop Type</Label>
                   <Select
-                    value={formData.crop}
-                    onValueChange={(value) => handleInputChange('crop', value)}
+                    value={formData.Item}
+                    onValueChange={(value) => handleInputChange('Item', value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a crop" />
                     </SelectTrigger>
                     <SelectContent>
                       {crops.map((crop) => (
-                        <SelectItem key={crop} value={crop.toLowerCase()}>
+                        <SelectItem key={crop} value={crop}>
                           {crop}
                         </SelectItem>
                       ))}
@@ -174,17 +249,17 @@ const CropYieldPrediction = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="fertilizerType">Fertilizer Type</Label>
+                  <Label htmlFor="fertilizer_type">Fertilizer Type</Label>
                   <Select
-                    value={formData.fertilizerType}
-                    onValueChange={(value) => handleInputChange('fertilizerType', value)}
+                    value={formData.fertilizer_type}
+                    onValueChange={(value) => handleInputChange('fertilizer_type', value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select fertilizer type" />
                     </SelectTrigger>
                     <SelectContent>
                       {fertilizerTypes.map((type) => (
-                        <SelectItem key={type} value={type.toLowerCase()}>
+                        <SelectItem key={type} value={type}>
                           {type}
                         </SelectItem>
                       ))}
@@ -193,28 +268,28 @@ const CropYieldPrediction = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="fertilizerAmount">Fertilizer Amount (kg)</Label>
+                  <Label htmlFor="fertilizer_amount">Fertilizer Amount (kg)</Label>
                   <Input
                     type="number"
-                    value={formData.fertilizerAmount}
-                    onChange={(e) => handleInputChange('fertilizerAmount', e.target.value)}
+                    value={formData.fertilizer_amount}
+                    onChange={(e) => handleInputChange('fertilizer_amount', e.target.value)}
                     placeholder="Enter amount in kg"
                     className="w-full"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="pesticideType">Pesticide Type</Label>
+                  <Label htmlFor="pesticide_type">Pesticide Type</Label>
                   <Select
-                    value={formData.pesticideType}
-                    onValueChange={(value) => handleInputChange('pesticideType', value)}
+                    value={formData.pesticide_type}
+                    onValueChange={(value) => handleInputChange('pesticide_type', value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select pesticide type" />
                     </SelectTrigger>
                     <SelectContent>
                       {pesticideTypes.map((type) => (
-                        <SelectItem key={type} value={type.toLowerCase()}>
+                        <SelectItem key={type} value={type}>
                           {type}
                         </SelectItem>
                       ))}
@@ -223,11 +298,11 @@ const CropYieldPrediction = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="pesticidesAmount">Pesticides Amount (tonnes)</Label>
+                  <Label htmlFor="pesticides_tonnes">Pesticides Amount (tonnes)</Label>
                   <Input
                     type="number"
-                    value={formData.pesticidesAmount}
-                    onChange={(e) => handleInputChange('pesticidesAmount', e.target.value)}
+                    value={formData.pesticides_tonnes}
+                    onChange={(e) => handleInputChange('pesticides_tonnes', e.target.value)}
                     placeholder="Enter amount in tonnes"
                     className="w-full"
                   />
@@ -243,7 +318,7 @@ const CropYieldPrediction = () => {
                       <SelectValue placeholder="Select your country" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="india">India</SelectItem>
+                      <SelectItem value="India">India</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -254,12 +329,59 @@ const CropYieldPrediction = () => {
               <Button
                 type="submit"
                 className="w-full bg-green-600 hover:bg-green-700"
+                disabled={isSubmitting || !location.latitude}
               >
-                Predict Yield
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Predicting...
+                  </>
+                ) : (
+                  'Predict Yield'
+                )}
               </Button>
             </CardFooter>
           </form>
         </Card>
+      </div>
+      <div className='mt-20 ' id='prediction-results'>
+        {/* Prediction Results */}
+        {prediction && (
+          <div className="mt-6 p-4 bg-green-50 rounded-lg">
+            <h2 className="text-lg font-semibold text-green-800 mb-2">Prediction Results</h2>
+            <div className="space-y-2 text-sm">
+              <p><span className="font-medium">Predicted Yield:</span> {prediction.predicted_yield} hg/ha</p>
+              {/* <p><span className="font-medium">Average Temperature:</span> {prediction.avg_temp}°C</p>
+                  <p><span className="font-medium">Average Rainfall:</span> {prediction.average_rain_fall_mm_per_year} mm/year</p> */}
+            </div>
+          </div>
+        )}
+
+        {(isSubmitting && suggestionGeneration) || suggestions ? (
+          <div className="mt-6 space-y-4">
+            {(isSubmitting && suggestionGeneration) && (
+              <div className="flex items-center justify-center h-96 w-full">
+                <div className="flex items-center justify-center gap-2">
+                  <Loader className="animate-spin" /> Generating Suggestions
+                </div>
+              </div>
+            )}
+            {/* Suggestions */}
+            {suggestions && (
+              <>
+                <h2 className="text-lg font-semibold text-green-800">Improvement Suggestions</h2>
+                {suggestions.map((suggestion: any, index: any) => (
+                  <div key={index} className="p-4 bg-white rounded-lg shadow-sm border border-green-100">
+                    <h3 className="font-medium text-green-700">{suggestion.category}</h3>
+                    <p className="text-sm text-gray-600 mt-1">{suggestion.suggestion}</p>
+                    <p className="text-xs text-gray-500 mt-1">{suggestion.reason}</p>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        ) : null}
+
       </div>
     </div>
   );
